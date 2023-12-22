@@ -9,14 +9,17 @@ from PyQt5.QtGui import QImage, QPixmap
 from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QLineEdit, QPushButton, QVBoxLayout
 
 # 모델 불러오기
-model = torch.hub.load('ultralytics/yolov5', 'custom', path="C:/ai/headhunter/best.pt")
+# Load the model
+model = torch.hub.load('ultralytics/yolov5', 'custom', path="./Subway_Crowd_control_AI/Subway_Crowd_control_AI.pt")
 
 # pygame 초기화
+# Initialize pygame
 pygame.mixer.init()
 
 # 음성 송출을 담당할 함수
+# Function responsible for playing announcements
 def play_announcement():
-    pygame.mixer.music.load("C:/ai/headhunter/ttswomanEng.mp3")
+    pygame.mixer.music.load("./Subway_Crowd_control_AI/ttswomanEng.mp3")
     pygame.mixer.music.play()
     while pygame.mixer.music.get_busy():
         continue
@@ -25,6 +28,7 @@ is_announcement_playing = False
 is_previous_head_count_more_than_2 = False
 
 # 머리 개수 업데이트 함수
+# Function to update head count
 def update_head_count():
     global is_announcement_playing, is_previous_head_count_more_than_2
 
@@ -59,13 +63,13 @@ class MainWindow(QWidget):
         self.setWindowTitle("Head Count App")
         self.setGeometry(100, 100, 800, 600)
 
-        self.inline_label = QLabel("Set the maximum number of people:")
+        self.inline_label = QLabel("최대 인원 수를 설정하세요:")
         self.inline_input = QLineEdit()
-        self.start_button = QPushButton("Start")
+        self.start_button = QPushButton("시작")
         self.start_button.clicked.connect(self.start_detection)
 
         self.video_label = QLabel()
-        self.video_label.setFixedSize(640, 480)  # 비디오 화면 크기 조절
+        self.video_label.setFixedSize(640, 480)  # 비디오 화면 크기 조절 (Adjust video screen size)
 
         layout = QVBoxLayout()
         layout.addWidget(self.inline_label)
@@ -78,7 +82,8 @@ class MainWindow(QWidget):
     def start_detection(self):
         global inline, cap
         inline = int(self.inline_input.text())
-        #카메라 인덱싱
+        # 카메라 인덱싱
+        # Camera indexing
         cap = cv2.VideoCapture(0)
         detection_thread = Thread(target=update_head_count)
         detection_thread.start()
@@ -87,14 +92,14 @@ class MainWindow(QWidget):
     def start_webcam_stream(self):
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.update_webcam_frame)
-        self.timer.start(1000 // 30)  # 웹캠 프레임 업데이트 간격 설정 (정수로 변환)
+        self.timer.start(1000 // 30)  # 웹캠 프레임 업데이트 간격 설정 (정수로 변환) (Set webcam frame update interval)
 
     def update_webcam_frame(self):
         ret, frame = cap.read()
         if ret:
             frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             results = model(frame_rgb)
-            frame_with_boxes = draw_boxes(frame_rgb, results)  # 경계 상자 그리기 추가
+            frame_with_boxes = draw_boxes(frame_rgb, results)  # 경계 상자 그리기 추가 (Added drawing bounding boxes)
             h, w, ch = frame_with_boxes.shape
             bytes_per_line = ch * w
             convert_to_Qt_format = QImage(frame_with_boxes.data, w, h, bytes_per_line, QImage.Format_RGB888)
@@ -102,17 +107,19 @@ class MainWindow(QWidget):
             self.video_label.setPixmap(QPixmap.fromImage(p))
 
     # 'q' 키를 눌렀을 때 어플리케이션 종료
+    # Application exit when 'q' key is pressed
     def keyPressEvent(self, event):
         if event.key() == Qt.Key_Q:
-            app.quit()  # 어플리케이션 종료
-            sys.exit()  # 터미널 종료
+            app.quit()  # 어플리케이션 종료 (Exit the application)
+            sys.exit()  # 터미널 종료 (Exit the terminal)
 
 # 객체 감지 결과에 경계 상자를 그리는 함수
+# Function to draw bounding boxes on object detection results
 def draw_boxes(frame, results):
     for *box, label, conf in results.xyxy[0]:
-        if int(label) == 0:  # 클래스 인덱스가 0인 경우
+        if int(label) == 0:  # 클래스 인덱스가 0인 경우 (If the class index is 0)
             x1, y1, x2, y2 = map(int, box)
-            cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)  # 경계 상자 그리기 (녹색)
+            cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)  # 경계 상자 그리기 (녹색) (Draw bounding boxes in green)
     return frame
 
 if __name__ == '__main__':
