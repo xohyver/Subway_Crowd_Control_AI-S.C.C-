@@ -19,7 +19,7 @@ pygame.mixer.init()
 # 음성 송출을 담당할 함수
 # Function responsible for playing announcements
 def play_announcement():
-    pygame.mixer.music.load("./Subway_Crowd_control_AI/ttswomanEng.mp3")
+    pygame.mixer.music.load("./Subway_Crowd_control_AI/announcements/ttswomanEng.mp3")
     pygame.mixer.music.play()
     while pygame.mixer.music.get_busy():
         continue
