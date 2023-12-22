@@ -11,7 +11,9 @@
 직접 머리 이미지 800장을 수집한 뒤  roboflow를 이용해 데이터셋을 생성한 후, yolov5로 커스텀 트레이닝을 하여 가중치 파일인 Subway_Crowd_control_AI.pt을 추출했다. Subway_Crowd_control_AI.pt를 이용하여 객체인식을 수행한다./After collecting 800 head images manually and generating a dataset using Roboflow, I performed custom training with YOLOv5 to obtain the weight file 'Subway_Crowd_control_AI.pt'. I will use 'Subway_Crowd_control_AI.pt' to perform object recognition.
 
 #Tips
-안내음성의 성별을 바꿀 수 있습니다. ttswomanEng/ttsmanEng에 따라 각각 남성, 여성의 음성을 담고 있습니다. main.py에서  play_announcement함수 내에 음성파일 경로를 수정하세요./You can change the gender of the guidance voice. Depending on whether you choose "ttswomanEng" or "ttsmanEng," you will have female or male voices, respectively. Please modify the audio file path within the "play_announcement" function in "main.py.
+1.안내음성의 성별을 바꿀 수 있습니다. ttswomanEng/ttsmanEng에 따라 각각 남성, 여성의 음성을 담고 있습니다. main.py에서  play_announcement함수 내에 음성파일 경로를 수정하세요./You can change the gender of the guidance voice. Depending on whether you choose "ttswomanEng" or "ttsmanEng," you will have female or male voices, respectively. Please modify the audio file path within the "play_announcement" function in "main.py.
+
+2. 만약 웹캠을 연결하고싶다면 line 87에서 cap = cv2.VideoCapture(0)를 카메라 인덱스에 맞게 변경하세요./If you want to connect a webcam, please change "cap = cv2.VideoCapture(0)" on line 87 to the appropriate camera index.
 
 
 
