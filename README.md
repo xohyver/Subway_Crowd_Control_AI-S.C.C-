@@ -2,7 +2,7 @@
 이것은 지하철의 인원을 효과적으로 관리하기 위한 프로그램입니다. 사람의 머리를 인식하여 인원을 세고, 설정한 최대인원에 도달하면 안내방송이 출력됩니다. 이 프로그램은 사람의 머리를 학습한 가중치 파일을 기반으로 구동됩니다./This is a program designed to effectively manage the number of passengers in the subway. It detects people's heads to count the number of passengers, and when the maximum capacity is reached, it plays a guidance announcement. This program is based on weight files that have been trained to detect human heads.
 
 
-# How_to_Use
+# How to Use
 1. main.py에서 Subway_Crowd_control_AI.pt 파일과 안내음성 파일의 디렉토리를 설정하는 코드를 변경하세요./Modify the directory paths for "Subway_Crowd_control_AI.pt" and the guidance audio files in the "main.py" file.
 2. main.py파일을 실행시키세요./Run main.py
 3. 처음 뜨는 화면에 최대인원을 설정하고 start를 누르세요./On the initial screen, set the maximum capacity and press 'start'.
