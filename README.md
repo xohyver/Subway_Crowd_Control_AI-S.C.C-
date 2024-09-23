@@ -66,11 +66,11 @@ https://youtu.be/7izh1vydHPA?si=Bczb0R-mfdPYqIDC
 
 
 # Tips
-> 1.안내음성의 성별을 바꿀 수 있습니다. ttswomanEng/ttsmanEng에 따라 각각 남성, 여성의 음성을 담고 있습니다. main.py에서  play_announcement함수 내에 음성파일 경로를 수정하세요.  
+### 1.안내음성의 성별을 바꿀 수 있습니다. ttswomanEng/ttsmanEng에 따라 각각 남성, 여성의 음성을 담고 있습니다. main.py에서  play_announcement함수 내에 음성파일 경로를 수정하세요.  
 
-> 2. 만약 웹캠을 연결하고싶다면 main.py는 line 13, mainGUI.py는 line 85에서 cap = cv2.VideoCapture(0)를 카메라 인덱스에 맞게 변경하세요.  
+### 2. 만약 웹캠을 연결하고싶다면 main.py는 line 13, mainGUI.py는 line 85에서 cap = cv2.VideoCapture(0)를 카메라 인덱스에 맞게 변경하세요.  
 
-> 3.mainGui.py는 Pyqt5를 사용하여 GUI가 존재하는 버전이고, main.py는 GUI가 존재하지 않는 버전입니다.
+### 3.mainGui.py는 Pyqt5를 사용하여 GUI가 존재하는 버전이고, main.py는 GUI가 존재하지 않는 버전입니다.
 
 
 
