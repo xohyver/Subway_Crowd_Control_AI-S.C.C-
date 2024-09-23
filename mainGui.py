@@ -8,13 +8,10 @@ from PyQt5.QtCore import QTimer, Qt
 from PyQt5.QtGui import QImage, QPixmap
 from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QLineEdit, QPushButton, QVBoxLayout
 
-# YOLOv5 모델 로드
 model = torch.hub.load('ultralytics/yolov5', 'custom', path="./Subway_Crowd_control_AI/Subway_Crowd_control_AI.pt")
 
-# pygame 초기화
 pygame.mixer.init()
 
-# 안내 방송 재생 함수
 def play_audio_announcement():
     pygame.mixer.music.load("./Subway_Crowd_control_AI/announcements/ttswomanEng.mp3")
     pygame.mixer.music.play()
