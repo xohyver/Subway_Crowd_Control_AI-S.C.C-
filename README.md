@@ -16,6 +16,7 @@
 
 2. 만약 웹캠을 연결하고싶다면 line 87에서 cap = cv2.VideoCapture(0)를 카메라 인덱스에 맞게 변경하세요./If you want to connect a webcam, please change "cap = cv2.VideoCapture(0)" on line 87 to the appropriate camera index.
 
+3.mainGui.py는 Pyqt5를 사용하여 GUI가 존재하는 버전이고, main.py는 GUI가 존재하지 않는 버전입니다./MainGui.py is a version with a GUI using Pyqt5, and main.py is a version without a GUI.
 
 
 이 코드는 하나의 문제가 있는데 코드를 종료하기 위해서 에디터 프로그램까지 완전히 종료해야한다는 점입니다. 터미널에서 Ctrl+C를 눌러도 음성 재생이 멈추지 않습니다. 이문제를 해결 가능한 방법을 아는 분은 nmykga@gmail.com으로 피드백 주시면 감사하겠습니다./The issue with this code is that in order to exit the code, you have to completely exit the editor program as well. Even if you press Ctrl+C in the terminal, the audio playback does not stop. If anyone knows a solution to this problem, please provide feedback to nmykga@gmail.com. Thank you.
