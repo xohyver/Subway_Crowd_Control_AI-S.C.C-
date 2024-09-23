@@ -1,136 +1,59 @@
-import sys
 import cv2
 import torch
 import pygame
-from gtts import gTTS
 from threading import Thread
-from PyQt5.QtCore import QTimer, Qt
-from PyQt5.QtGui import QImage, QPixmap
-from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QLineEdit, QPushButton, QVBoxLayout
 
 # 모델 불러오기
-# Load the model
 model = torch.hub.load('ultralytics/yolov5', 'custom', path="./Subway_Crowd_control_AI/Subway_Crowd_control_AI.pt")
 
 # pygame 초기화
-# Initialize pygame
 pygame.mixer.init()
 
-# 음성 송출을 담당할 함수
-# Function responsible for playing announcements
-def play_announcement():
+# 음성 안내 방송 재생 상태 변수
+is_audio_playing = False
+
+# 카메라 설정
+cap = cv2.VideoCapture(0)
+
+# 최대 인원 수 입력 받기
+max_people = int(input("최대 허용 인원을 입력하세요: "))
+
+# 음성 안내 방송 재생 함수
+def play_audio():
     pygame.mixer.music.load("./Subway_Crowd_control_AI/announcements/ttswomanEng.mp3")
     pygame.mixer.music.play()
     while pygame.mixer.music.get_busy():
         continue
 
-is_announcement_playing = False
-is_previous_head_count_more_than_2 = False
+while True:
+    # 웹캠 프레임 읽기
+    ret, frame = cap.read()
+    if not ret:
+        break
 
-# 머리 개수 업데이트 함수
-# Function to update head count
-def update_head_count():
-    global is_announcement_playing, is_previous_head_count_more_than_2
+    # YOLOv5를 통해 사람 감지
+    frame_rgb = frame[:, :, ::-1]
+    results = model(frame_rgb)
+    
+    # 사람 수 계산 (label이 0인 경우 사람으로 간주)
+    head_count = sum(1 for *box, label, conf in results.xyxy[0] if int(label) == 0)
 
-    while True:
-        ret, frame = cap.read()
-        frame_rgb = frame[:, :, ::-1]
-        results = model(frame_rgb)
-        num_heads = sum([1 for *box, label, conf in results.xyxy[0] if int(label) == 0])
+    # 감지된 인원이 최대 인원을 초과하는지 확인
+    if not is_audio_playing and head_count > max_people:
+        # 음성 안내 방송 재생을 비동기로 실행
+        Thread(target=play_audio).start()
+        is_audio_playing = True
+    elif is_audio_playing and not pygame.mixer.music.get_busy():
+        # 방송이 끝나면 상태를 초기화
+        is_audio_playing = False
 
-        if not is_announcement_playing:
-            if num_heads > (inline - 1) and not is_previous_head_count_more_than_2:
-                announcement_thread = Thread(target=play_announcement)
-                announcement_thread.start()
-                is_announcement_playing = True
-                is_previous_head_count_more_than_2 = True
-            elif num_heads <= (inline - 1) and is_previous_head_count_more_than_2:
-                is_previous_head_count_more_than_2 = False
-        elif is_announcement_playing and pygame.mixer.music.get_busy() == False:
-            if num_heads > (inline - 1):
-                announcement_thread = Thread(target=play_announcement)
-                announcement_thread.start()
-                is_previous_head_count_more_than_2 = True
-            else:
-                is_announcement_playing = False
+    # 웹캠 화면 출력 (실시간 피드백)
+    cv2.imshow("Webcam", frame)
 
-class MainWindow(QWidget):
-    def __init__(self):
-        super().__init__()
-        self.init_ui()
+    # 'q'를 눌러 프로그램 종료
+    if cv2.waitKey(1) & 0xFF == ord('q'):
+        break
 
-    def init_ui(self):
-        self.setWindowTitle("Head Count App")
-        self.setGeometry(100, 100, 800, 600)
-
-        self.inline_label = QLabel("Please enter the maximum number of participants: ")
-        self.inline_input = QLineEdit()
-        self.start_button = QPushButton("Start")
-        self.start_button.clicked.connect(self.start_detection)
-
-        self.video_label = QLabel()
-        self.video_label.setFixedSize(640, 480)  # 비디오 화면 크기 조절 (Adjust video screen size)
-
-        layout = QVBoxLayout()
-        layout.addWidget(self.inline_label)
-        layout.addWidget(self.inline_input)
-        layout.addWidget(self.start_button)
-        layout.addWidget(self.video_label)
-
-        self.setLayout(layout)
-
-    def start_detection(self):
-        global inline, cap
-        inline = int(self.inline_input.text())
-        # 카메라 인덱싱
-        # Camera indexing
-        cap = cv2.VideoCapture(0)
-        detection_thread = Thread(target=update_head_count)
-        detection_thread.start()
-        self.start_webcam_stream()
-
-    def start_webcam_stream(self):
-        self.timer = QTimer(self)
-        self.timer.timeout.connect(self.update_webcam_frame)
-        self.timer.start(1000 // 30)  # 웹캠 프레임 업데이트 간격 설정 (정수로 변환) (Set webcam frame update interval)
-
-    def update_webcam_frame(self):
-        ret, frame = cap.read()
-        if ret:
-            frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-            results = model(frame_rgb)
-            frame_with_boxes = draw_boxes(frame_rgb, results)  # 경계 상자 그리기 추가 (Added drawing bounding boxes)
-            h, w, ch = frame_with_boxes.shape
-            bytes_per_line = ch * w
-            convert_to_Qt_format = QImage(frame_with_boxes.data, w, h, bytes_per_line, QImage.Format_RGB888)
-            p = convert_to_Qt_format.scaled(640, 480, aspectRatioMode=1)
-            self.video_label.setPixmap(QPixmap.fromImage(p))
-
-    # 'q' 키를 눌렀을 때 어플리케이션 종료
-    # Application exit when 'q' key is pressed
-    def keyPressEvent(self, event):
-        if event.key() == Qt.Key_Q:
-            app.quit()  # 어플리케이션 종료 (Exit the application)
-            sys.exit()  # 터미널 종료 (Exit the terminal)
-
-# 객체 감지 결과에 경계 상자를 그리는 함수
-# Function to draw bounding boxes on object detection results
-def draw_boxes(frame, results):
-    for *box, label, conf in results.xyxy[0]:
-        if int(label) == 0:  # 클래스 인덱스가 0인 경우 (If the class index is 0)
-            x1, y1, x2, y2 = map(int, box)
-            cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)  # 경계 상자 그리기 (녹색) (Draw bounding boxes in green)
-    return frame
-
-if __name__ == '__main__':
-    app = QApplication(sys.argv)
-    window = MainWindow()
-    window.show()
-    sys.exit(app.exec_())
-
-# 'q' 키를 눌렀을 때 어플리케이션 종료
-# Application exit when 'q' key is pressed
-def keyPressEvent(self, event):
-    if event.key() == Qt.Key_Q:
-        cap.release()  # 카메라 캡처 해제 (Release camera capture)
-        app.quit()  # 어플리케이션 종료 (Exit the application)
+# 자원 해제
+cap.release()
+cv2.destroyAllWindows()
