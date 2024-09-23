@@ -1,5 +1,6 @@
 # Subway Crowd Control AI(S.C.C)
--how to use : 프로그램 실행 후, 공간에 대한 최대 인원 입력. 
+-How to use? : 
+프로그램 실행 후, 공간에 대한 최대 인원 입력. 
 
 &nbsp;  
 
