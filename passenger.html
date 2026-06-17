@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>S.C.C — 혼잡도 안내</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=DM+Mono:wght@400;500&display=swap');
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Noto Sans KR', sans-serif;
+      background: #1a1a1a;
+      color: #fff;
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+
+    /* ── 메인 패널 ── */
+    .panel {
+      background: #f0f0f0;
+      border-radius: 16px;
+      overflow: hidden;
+      width: 100%;
+      max-width: 680px;
+      box-shadow: 0 8px 40px rgba(0,0,0,.5);
+    }
+
+    /* ── 상단 역명 바 ── */
+    .station-bar {
+      background: #2a2a2a;
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .station-name-wrap {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .station-badge {
+      background: #3dba6a;
+      color: #fff;
+      font-size: 15px;
+      font-weight: 900;
+      padding: 5px 12px;
+      border-radius: 999px;
+      letter-spacing: -0.3px;
+    }
+
+    .station-name-ko {
+      font-size: 26px;
+      font-weight: 900;
+      color: #fff;
+      letter-spacing: -0.5px;
+    }
+
+    .station-name-en {
+      font-size: 13px;
+      color: #aaa;
+      margin-top: 1px;
+    }
+
+    .live-wrap {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: #aaa;
+    }
+
+    .live-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: #3dba6a;
+      animation: blink 1.8s infinite;
+    }
+
+    .live-dot.off { background: #555; animation: none; }
+
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.25} }
+
+    /* ── 현재 탑승 인원 중간 섹션 ── */
+    .center-section {
+      background: #fff;
+      padding: 18px 24px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 2px solid #e0e0e0;
+    }
+
+    .car-label-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    /* 지하철 열차 SVG */
+    .train-svg-wrap {
+      display: flex;
+      align-items: center;
+    }
+
+    .current-count-wrap {
+      text-align: right;
+    }
+
+    .current-count-label {
+      font-size: 11px;
+      color: #888;
+      margin-bottom: 2px;
+    }
+
+    .current-count-num {
+      font-family: 'DM Mono', monospace;
+      font-size: 36px;
+      font-weight: 500;
+      color: #1a1a1a;
+      line-height: 1;
+      transition: color 0.5s;
+    }
+
+    .current-count-unit {
+      font-size: 14px;
+      color: #666;
+      margin-left: 2px;
+    }
+
+    /* ── 호차 혼잡도 바 ── */
+    .crowd-bar-section {
+      background: #f0f0f0;
+      padding: 16px 16px 12px;
+    }
+
+    .crowd-bar-section-label {
+      font-size: 10px;
+      color: #888;
+      text-align: center;
+      margin-bottom: 10px;
+      letter-spacing: 0.05em;
+    }
+
+    .car-blocks {
+      display: flex;
+      gap: 4px;
+      align-items: flex-end;
+      justify-content: center;
+    }
+
+    .car-block {
+      flex: 1;
+      border-radius: 6px 6px 4px 4px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-end;
+      padding: 6px 2px 5px;
+      min-width: 0;
+      transition: background 0.6s ease;
+      position: relative;
+      cursor: default;
+    }
+
+    /* 현재 칸 강조 */
+    .car-block.active {
+      outline: 3px solid #1a1a1a;
+      outline-offset: 1px;
+      z-index: 2;
+    }
+
+    .car-block.active::after {
+      content: '▼';
+      position: absolute;
+      top: -18px;
+      font-size: 11px;
+      color: #1a1a1a;
+    }
+
+    .car-block .car-num-label {
+      font-size: 10px;
+      font-weight: 700;
+      color: rgba(0,0,0,.55);
+      line-height: 1;
+      margin-bottom: 3px;
+    }
+
+    .car-block .car-level-label {
+      font-size: 9px;
+      color: rgba(0,0,0,.45);
+      line-height: 1;
+    }
+
+    /* 혼잡도별 색상 */
+    .lvl-comfortable  { background: #3dba6a; }
+    .lvl-moderate     { background: #f5a623; }
+    .lvl-crowded      { background: #e8522a; }
+    .lvl-very_crowded { background: #cc1a1a; }
+
+    /* ── 하단 상세 배너 ── */
+    .detail-banner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 20px;
+      background: #fff;
+      border-top: 2px solid #e0e0e0;
+      transition: background 0.6s ease;
+    }
+
+    .detail-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .level-circle {
+      width: 42px; height: 42px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 700;
+      color: #fff;
+      flex-shrink: 0;
+      transition: background 0.6s ease;
+    }
+
+    .detail-text-wrap .detail-level {
+      font-size: 18px;
+      font-weight: 900;
+      letter-spacing: -0.3px;
+      transition: color 0.5s;
+    }
+
+    .detail-text-wrap .detail-desc {
+      font-size: 12px;
+      color: #888;
+      margin-top: 1px;
+    }
+
+    .ratio-display {
+      font-family: 'DM Mono', monospace;
+      font-size: 28px;
+      font-weight: 500;
+      color: #1a1a1a;
+      transition: color 0.5s;
+    }
+
+    .ratio-display span {
+      font-size: 13px;
+      color: #888;
+      margin-left: 1px;
+    }
+
+    /* ── 업데이트 푸터 ── */
+    .update-footer {
+      background: #2a2a2a;
+      padding: 8px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 10px;
+      color: #666;
+      font-family: 'DM Mono', monospace;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="panel">
+
+    <!-- 역명 바 -->
+    <div class="station-bar">
+      <div class="station-name-wrap">
+        <div class="station-badge">S.C.C</div>
+        <div>
+          <div class="station-name-ko">1호차 혼잡도</div>
+          <div class="station-name-en">Car 1 — Crowd Level</div>
+        </div>
+      </div>
+      <div class="live-wrap">
+        <div class="live-dot" id="live-dot"></div>
+        <span id="live-text">연결 중</span>
+      </div>
+    </div>
+
+    <!-- 현재 탑승 인원 + 열차 아이콘 -->
+    <div class="center-section">
+      <div class="train-svg-wrap">
+        <svg width="160" height="56" viewBox="0 0 160 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <!-- 차체 -->
+          <rect x="2" y="4" width="156" height="38" rx="8" fill="#e8eaf0" stroke="#c0c4d0" stroke-width="1.5"/>
+          <!-- 앞부분 경사 -->
+          <path d="M2 12 Q2 4 10 4 L30 4 L30 42 L2 42 Z" fill="#d0d4e0" stroke="#c0c4d0" stroke-width="1"/>
+          <!-- 앞유리 -->
+          <rect x="6" y="8" width="20" height="14" rx="2" fill="#b8d4f0" stroke="#90b0d8" stroke-width="1"/>
+          <!-- 헤드라이트 -->
+          <circle cx="10" cy="32" r="3" fill="#fff7c0" stroke="#d0c060" stroke-width="1"/>
+          <!-- 창문 -->
+          <rect x="38" y="9" width="18" height="12" rx="2" fill="#c8e0f4" stroke="#90b8d8" stroke-width="0.8"/>
+          <rect x="62" y="9" width="18" height="12" rx="2" fill="#c8e0f4" stroke="#90b8d8" stroke-width="0.8"/>
+          <rect x="86" y="9" width="18" height="12" rx="2" fill="#c8e0f4" stroke="#90b8d8" stroke-width="0.8"/>
+          <rect x="110" y="9" width="18" height="12" rx="2" fill="#c8e0f4" stroke="#90b8d8" stroke-width="0.8"/>
+          <rect x="134" y="9" width="18" height="12" rx="2" fill="#c8e0f4" stroke="#90b8d8" stroke-width="0.8"/>
+          <!-- 문 -->
+          <rect x="49" y="24" width="6" height="16" rx="1.5" fill="#c0c4d0"/>
+          <rect x="73" y="24" width="6" height="16" rx="1.5" fill="#c0c4d0"/>
+          <rect x="97" y="24" width="6" height="16" rx="1.5" fill="#c0c4d0"/>
+          <rect x="121" y="24" width="6" height="16" rx="1.5" fill="#c0c4d0"/>
+          <!-- 하단 스커트 -->
+          <rect x="2" y="40" width="156" height="4" rx="1" fill="#b0b4c0"/>
+          <!-- 바퀴 -->
+          <circle cx="28" cy="50" r="4" fill="#888" stroke="#666" stroke-width="1"/>
+          <circle cx="60" cy="50" r="4" fill="#888" stroke="#666" stroke-width="1"/>
+          <circle cx="100" cy="50" r="4" fill="#888" stroke="#666" stroke-width="1"/>
+          <circle cx="132" cy="50" r="4" fill="#888" stroke="#666" stroke-width="1"/>
+          <!-- 레일 -->
+          <rect x="0" y="54" width="160" height="2" rx="1" fill="#ccc"/>
+        </svg>
+      </div>
+
+      <div class="current-count-wrap">
+        <div class="current-count-label">현재 탑승 인원</div>
+        <div class="current-count-num" id="count-big">—<span class="current-count-unit">명</span></div>
+      </div>
+    </div>
+
+    <!-- 호차 혼잡도 바 (더미 + 실제 1호차) -->
+    <div class="crowd-bar-section">
+      <div class="crowd-bar-section-label">호차별 혼잡도</div>
+      <div class="car-blocks" id="car-blocks">
+        <!-- JS로 생성 -->
+      </div>
+    </div>
+
+    <!-- 하단 상세 배너 -->
+    <div class="detail-banner" id="detail-banner">
+      <div class="detail-left">
+        <div class="level-circle" id="level-circle">—</div>
+        <div class="detail-text-wrap">
+          <div class="detail-level" id="detail-level">—</div>
+          <div class="detail-desc" id="detail-desc">서버 연결 대기 중</div>
+        </div>
+      </div>
+      <div class="ratio-display" id="ratio-display">—<span>%</span></div>
+    </div>
+
+    <!-- 푸터 -->
+    <div class="update-footer">
+      <span>S.C.C · Subway Crowd Control</span>
+      <span id="last-update">업데이트 대기 중...</span>
+    </div>
+
+  </div>
+
+  <script>
+    const API = "http://localhost:5000/api/status";
+
+    const LEVELS = {
+      comfortable:  { text:"여유",     desc:"탑승하기 좋습니다",          color:"#3dba6a", short:"여유" },
+      moderate:     { text:"보통",     desc:"다소 혼잡할 수 있습니다",    color:"#f5a623", short:"보통" },
+      crowded:      { text:"혼잡",     desc:"탑승 시 불편할 수 있습니다", color:"#e8522a", short:"혼잡" },
+      very_crowded: { text:"매우 혼잡", desc:"다음 열차를 이용해 주세요",  color:"#cc1a1a", short:"혼잡" },
+    };
+
+    // 더미 호차 데이터 (1호차 제외)
+    const DUMMY_CARS = [
+      { num:9, level:"comfortable" },
+      { num:8, level:"moderate" },
+      { num:7, level:"moderate" },
+      { num:6, level:"moderate" },
+      { num:5, level:"moderate" },
+      { num:4, level:"moderate" },
+      { num:3, level:"crowded" },
+      { num:2, level:"crowded" },
+    ];
+
+    // 호차 블록 생성
+    const blocksEl = document.getElementById("car-blocks");
+    DUMMY_CARS.forEach(car => {
+      const lv = LEVELS[car.level];
+      const div = document.createElement("div");
+      div.className = `car-block lvl-${car.level}`;
+      div.innerHTML = `<span class="car-num-label">${car.num}</span><span class="car-level-label">${lv.short}</span>`;
+      blocksEl.appendChild(div);
+    });
+
+    // 1호차 (실제 데이터)
+    const car1El = document.createElement("div");
+    car1El.id = "car1-block";
+    car1El.className = "car-block active lvl-comfortable";
+    car1El.innerHTML = `<span class="car-num-label">1</span><span class="car-level-label" id="car1-label">—</span>`;
+    blocksEl.appendChild(car1El);
+
+    function render(d) {
+      const { head_count, max_people, ratio, level, level_en, running } = d;
+      const lv = LEVELS[level_en] || LEVELS.comfortable;
+      const pct = Math.round(ratio * 100);
+
+      // 현재 인원
+      document.getElementById("count-big").innerHTML =
+        `${head_count}<span class="current-count-unit">명</span>`;
+      document.getElementById("count-big").style.color = lv.color;
+
+      // 1호차 블록
+      const car1 = document.getElementById("car1-block");
+      car1.className = `car-block active lvl-${level_en}`;
+      document.getElementById("car1-label").textContent = lv.short;
+
+      // 상세 배너
+      const circle = document.getElementById("level-circle");
+      circle.textContent = lv.text === "매우 혼잡" ? "혼잡" : lv.text;
+      circle.style.background = lv.color;
+      document.getElementById("detail-level").textContent = lv.text;
+      document.getElementById("detail-level").style.color = lv.color;
+      document.getElementById("detail-desc").textContent =
+        running ? lv.desc : "감지가 시작되지 않았습니다";
+      document.getElementById("ratio-display").innerHTML =
+        `${pct}<span>%</span>`;
+      document.getElementById("ratio-display").style.color = lv.color;
+
+      // 업데이트 시각
+      const now = new Date();
+      const hms = [now.getHours(), now.getMinutes(), now.getSeconds()]
+        .map(n => String(n).padStart(2,"0")).join(":");
+      document.getElementById("last-update").textContent = `마지막 업데이트 ${hms}`;
+    }
+
+    function setOnline(online) {
+      const dot = document.getElementById("live-dot");
+      dot.className = "live-dot" + (online ? "" : " off");
+      document.getElementById("live-text").textContent = online ? "실시간" : "연결 끊김";
+    }
+
+    async function fetchStatus() {
+      try {
+        const res = await fetch(API, { signal: AbortSignal.timeout(4000) });
+        if (!res.ok) throw new Error();
+        render(await res.json());
+        setOnline(true);
+      } catch {
+        setOnline(false);
+      }
+    }
+
+    fetchStatus();
+    setInterval(fetchStatus, 2000);
+  </script>
+</body>
+</html>

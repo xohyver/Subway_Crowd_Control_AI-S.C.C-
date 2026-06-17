@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>S.C.C — 관리자</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;700&family=DM+Mono:wght@400;500&display=swap');
+
+    :root {
+      --bg: #0d0f14;
+      --surface: #14181f;
+      --surface2: #1a1f28;
+      --border: #1e2430;
+      --text-primary: #e8eaf0;
+      --text-muted: #5a6070;
+      --accent: #3b82f6;
+      --accent-hover: #2563eb;
+      --danger: #ef4444;
+      --success: #22c55e;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Noto Sans KR', sans-serif;
+      background: var(--bg);
+      color: var(--text-primary);
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 32px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .logo {
+      font-family: 'DM Mono', monospace;
+      font-size: 13px;
+      color: var(--text-muted);
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+    }
+    .logo span { color: var(--accent); }
+
+    .status-pill {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      padding: 5px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      transition: all 0.4s;
+    }
+    .status-pill.active { border-color: #166534; background: #0d2318; color: var(--success); }
+    .status-pill .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+    .status-pill.active .dot { animation: pulse 2s infinite; }
+
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+    /* ── 2열 레이아웃 ── */
+    main {
+      flex: 1;
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 36px 24px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      width: 100%;
+      align-items: start;
+    }
+
+    .col { display: flex; flex-direction: column; gap: 20px; }
+
+    /* ── 카메라 피드 ── */
+    .feed-wrap {
+      position: relative;
+      background: #000;
+      border-radius: 14px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      aspect-ratio: 4/3;
+    }
+
+    #camera-feed {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: none; /* 스트림 시작 전 숨김 */
+    }
+
+    .feed-placeholder {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      color: var(--text-muted);
+      font-size: 13px;
+    }
+    .feed-placeholder .icon { font-size: 40px; opacity: 0.35; }
+
+    .feed-live-badge {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: rgba(0,0,0,0.6);
+      border-radius: 6px;
+      padding: 4px 10px;
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      color: var(--success);
+      display: none;
+      align-items: center;
+      gap: 6px;
+    }
+    .feed-live-badge .dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--success);
+      animation: pulse 2s infinite;
+    }
+    .feed-live-badge.show { display: flex; }
+
+    /* ── 카드 ── */
+    .section-eyebrow {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.2em;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 20px;
+    }
+
+    .input-row { display: flex; gap: 10px; align-items: flex-end; }
+    .input-group { flex: 1; }
+
+    label {
+      display: block;
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+
+    input[type="number"] {
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text-primary);
+      font-family: 'DM Mono', monospace;
+      font-size: 20px;
+      padding: 12px 16px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    input[type="number"]:focus { border-color: var(--accent); }
+    input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; }
+
+    .btn {
+      padding: 13px 18px;
+      border-radius: 8px;
+      border: none;
+      font-family: 'Noto Sans KR', sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.2s, opacity 0.2s;
+      white-space: nowrap;
+    }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-primary:hover:not(:disabled) { background: var(--accent-hover); }
+    .btn-success { background: #166534; color: var(--success); }
+    .btn-success:hover:not(:disabled) { background: #14532d; }
+    .btn-danger  { background: #7f1d1d; color: var(--danger); }
+    .btn-danger:hover:not(:disabled)  { background: #6b1d1d; }
+    .btn-full { width: 100%; margin-top: 10px; }
+    .btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+    /* ── 수치 ── */
+    .metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .metric { background: var(--surface2); border-radius: 10px; padding: 14px 12px; text-align: center; }
+    .metric .m-label { font-size: 10px; color: var(--text-muted); margin-bottom: 6px; }
+    .metric .m-value { font-family: 'DM Mono', monospace; font-size: 22px; font-weight: 500; }
+    .metric .m-unit  { font-size: 11px; color: var(--text-muted); }
+
+    /* ── 토스트 ── */
+    #toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 20px;
+      font-size: 13px;
+      transition: transform 0.3s cubic-bezier(0.4,0,0.2,1);
+      white-space: nowrap;
+      pointer-events: none;
+    }
+    #toast.show { transform: translateX(-50%) translateY(0); }
+    #toast.toast-ok  { border-color: #166534; color: var(--success); }
+    #toast.toast-err { border-color: #7f1d1d; color: var(--danger); }
+
+    @media (max-width: 680px) {
+      main { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="logo"><span>S.C.C</span> · 관리자</div>
+    <div class="status-pill" id="status-pill">
+      <div class="dot"></div>
+      <span id="status-text">중지됨</span>
+    </div>
+  </header>
+
+  <main>
+
+    <!-- ── 왼쪽 열: 카메라 피드 ── -->
+    <div class="col">
+      <div>
+        <div class="section-eyebrow">카메라 피드</div>
+        <div class="feed-wrap">
+          <img id="camera-feed" src="" alt="카메라 피드"
+               onload="onFeedLoad()" onerror="onFeedError()" />
+          <div class="feed-placeholder" id="feed-placeholder">
+            <div class="icon">📷</div>
+            <span>감지 시작 후 영상이 표시됩니다</span>
+          </div>
+          <div class="feed-live-badge" id="feed-live-badge">
+            <div class="dot"></div>
+            LIVE
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── 오른쪽 열: 설정 / 제어 / 현황 ── -->
+    <div class="col">
+
+      <!-- 최대 인원 설정 -->
+      <div>
+        <div class="section-eyebrow">설정</div>
+        <div class="card">
+          <div class="input-row">
+            <div class="input-group">
+              <label for="max-input">최대 허용 인원</label>
+              <input type="number" id="max-input" min="1" max="999" value="50" />
+            </div>
+            <button class="btn btn-primary" onclick="saveConfig()">적용</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 감지 제어 -->
+      <div>
+        <div class="section-eyebrow">제어</div>
+        <div class="card">
+          <div class="btn-row">
+            <button class="btn btn-success" id="btn-start" onclick="startDetection()">▶ 감지 시작</button>
+            <button class="btn btn-danger"  id="btn-stop"  onclick="stopDetection()" disabled>■ 감지 중지</button>
+          </div>
+          <button class="btn btn-primary btn-full" style="background:#1e2d48;color:#93c5fd;"
+                  id="btn-demo" onclick="startDemo()">
+            ⚡ 데모 모드 (카메라 없이)
+          </button>
+        </div>
+      </div>
+
+      <!-- 실시간 현황 -->
+      <div>
+        <div class="section-eyebrow">실시간 현황</div>
+        <div class="card">
+          <div class="metrics">
+            <div class="metric">
+              <div class="m-label">현재 인원</div>
+              <div class="m-value" id="m-count">—</div>
+              <div class="m-unit">명</div>
+            </div>
+            <div class="metric">
+              <div class="m-label">최대 정원</div>
+              <div class="m-value" id="m-max">—</div>
+              <div class="m-unit">명</div>
+            </div>
+            <div class="metric">
+              <div class="m-label">혼잡도</div>
+              <div class="m-value" id="m-ratio">—</div>
+              <div class="m-unit">%</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <div id="toast"></div>
+
+  <script>
+    const BASE = "http://localhost:5000/api";
+    const FEED_URL = "http://localhost:5000/video_feed";
+
+    let feedActive = false;
+
+    // ── 카메라 피드 제어 ──────────────────────────────────────
+    function startFeed() {
+      const img = document.getElementById("camera-feed");
+      // src에 timestamp 붙여서 캐시 방지
+      img.src = FEED_URL + "?t=" + Date.now();
+      img.style.display = "block";
+      document.getElementById("feed-placeholder").style.display = "none";
+      document.getElementById("feed-live-badge").classList.add("show");
+      feedActive = true;
+    }
+
+    function stopFeed() {
+      const img = document.getElementById("camera-feed");
+      img.src = "";
+      img.style.display = "none";
+      document.getElementById("feed-placeholder").style.display = "flex";
+      document.getElementById("feed-live-badge").classList.remove("show");
+      feedActive = false;
+    }
+
+    function onFeedLoad() { /* 스트림 연결 성공 — 별도 처리 없음 */ }
+    function onFeedError() {
+      if (feedActive) stopFeed();
+    }
+
+    // ── API 호출 ──────────────────────────────────────────────
+    async function saveConfig() {
+      const v = parseInt(document.getElementById("max-input").value);
+      if (!v || v <= 0) return toast("유효한 숫자를 입력하세요", "err");
+      const res = await fetch(`${BASE}/config`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ max_people: v }),
+      });
+      if (res.ok) toast(`최대 인원 ${v}명으로 설정 완료`, "ok");
+      else toast("설정 실패", "err");
+    }
+
+    async function startDetection() {
+      const res = await fetch(`${BASE}/start`, { method: "POST" });
+      const d = await res.json();
+      if (res.ok) { toast(d.message, "ok"); setTimeout(startFeed, 1500); }
+      else toast(d.error, "err");
+    }
+
+    async function stopDetection() {
+      const res = await fetch(`${BASE}/stop`, { method: "POST" });
+      const d = await res.json();
+      if (res.ok) { toast(d.message, "ok"); stopFeed(); }
+      else toast(d.error, "err");
+    }
+
+    async function startDemo() {
+      const res = await fetch(`${BASE}/demo/start`, { method: "POST" });
+      const d = await res.json();
+      if (res.ok) toast(d.message, "ok");
+      else toast(d.error, "err");
+    }
+
+    // ── 상태 폴링 ─────────────────────────────────────────────
+    async function poll() {
+      try {
+        const res = await fetch(`${BASE}/status`, { signal: AbortSignal.timeout(3000) });
+        const d = await res.json();
+
+        document.getElementById("m-count").textContent = d.head_count;
+        document.getElementById("m-max").textContent   = d.max_people;
+        document.getElementById("m-ratio").textContent = Math.round(d.ratio * 100);
+
+        const pill     = document.getElementById("status-pill");
+        const txt      = document.getElementById("status-text");
+        const btnStart = document.getElementById("btn-start");
+        const btnStop  = document.getElementById("btn-stop");
+        const btnDemo  = document.getElementById("btn-demo");
+
+        if (d.running) {
+          pill.className = "status-pill active";
+          txt.textContent = "감지 중";
+          btnStart.disabled = true;
+          btnStop.disabled  = false;
+          btnDemo.disabled  = true;
+          // 피드 있는데 아직 안 켰으면 자동 시작
+          if (d.has_feed && !feedActive) startFeed();
+        } else {
+          pill.className = "status-pill";
+          txt.textContent = "중지됨";
+          btnStart.disabled = false;
+          btnStop.disabled  = true;
+          btnDemo.disabled  = false;
+          if (feedActive) stopFeed();
+        }
+      } catch {
+        document.getElementById("status-text").textContent = "서버 오프라인";
+      }
+    }
+
+    poll();
+    setInterval(poll, 2000);
+
+    // ── 토스트 ────────────────────────────────────────────────
+    let toastTimer;
+    function toast(msg, type = "ok") {
+      const el = document.getElementById("toast");
+      el.textContent = msg;
+      el.className = `show toast-${type}`;
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => { el.className = ""; }, 2800);
+    }
+  </script>
+</body>
+</html>
