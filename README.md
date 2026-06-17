@@ -24,14 +24,14 @@
 ### 4. 사용 기술
 > Python3  
 > Opencv  
-> Yolov5  
+> Yolov11 
 > Torch
 
 &nbsp;  
 
 # 📊 Structure
 - 카메라가 사람의 머리 상단을 촬영함
-- Yolov5 이용 객체 인식으로 머리 개수 파악
+- Yolo 활용 객체 인식으로 머리 개수 파악
 - 설정해둔 임계값 이상의 머리 감지시 안내방송 mp3 재생으로 인원 통제 유도
 
 &nbsp;  
